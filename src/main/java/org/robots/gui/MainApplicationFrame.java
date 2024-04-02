@@ -9,6 +9,7 @@ import javax.swing.*;
 
 import org.robots.log.Logger;
 import org.robots.state.SaveableWindow;
+import org.robots.state.WindowState;
 
 /**
  * Что требуется сделать:
@@ -52,15 +53,15 @@ public class MainApplicationFrame extends JFrame {
     }
     public void saveWindows(){
         for (var frame : desktopPane.getAllFrames()){
-            if (frame instanceof SaveableWindow)
-                ((SaveableWindow) frame).saveState();
+            if (frame instanceof WindowState)
+                ((WindowState) frame).saveState();
         }
     }
 
     private void restoreWindows(){
         for (var frame : desktopPane.getAllFrames()){
-            if (frame instanceof SaveableWindow)
-                ((SaveableWindow) frame).restoreState();
+            if (frame instanceof WindowState)
+                ((WindowState) frame).restoreState();
         }
     }
 
