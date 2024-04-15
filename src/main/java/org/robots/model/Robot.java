@@ -1,6 +1,8 @@
 package org.robots.model;
 
 import java.util.Observable;
+import static org.robots.model.GameMaths.*;
+import java.awt.Point;
 
 public class Robot extends Observable{
     private volatile double robotPositionX;
@@ -17,11 +19,6 @@ public class Robot extends Observable{
         robotPositionY = y;
     }
 
-    public String getInfo(){
-        return String.format("Positon: (%f, %f)\nDirection: %f",
-                robotPositionX, robotPositionY, robotDirection);
-    }
-
     public double getRobotPositionX(){
         return robotPositionX;
     }
@@ -34,69 +31,22 @@ public class Robot extends Observable{
         return robotDirection;
     }
 
-    public void update(double targetPositionX, double targetPositionY){
-        double distance = distance(targetPositionX, targetPositionY,
-                robotPositionX, robotPositionY);
+    public double getMaxVelocity() { return maxVelocity; }
+
+    public double getMaxAngularVelocity() { return maxAngularVelocity; }
+
+    public void update(Point targetPosition){
+        double distance = distance(targetPosition.x, targetPosition.y, robotPositionX, robotPositionY);
         if (distance < 0.5) {
             return;
         }
 
-        double angleToTarget = angleTo(robotPositionX, robotPositionY, targetPositionX, targetPositionY);
-        double angularVelocity = 0;
-
-        double diff = asNormalizedRadians(angleToTarget - robotDirection);
-
-        if (diff < Math.PI)
-            angularVelocity = maxAngularVelocity;
-
-        if (diff > Math.PI)
-            angularVelocity = -maxAngularVelocity;
-
-        if (unreachable(targetPositionX, targetPositionY))
-            angularVelocity = 0;
+        double angularVelocity = countAngularVelocity(targetPosition, this);
 
         moveRobot(maxVelocity, angularVelocity, 10);
         setChanged();
         notifyObservers(robotMoved);
         clearChanged();
-    }
-    private boolean unreachable(double targetPositionX, double targetPositionY) {
-        double dx = targetPositionX - robotPositionX;
-        double dy = targetPositionY - robotPositionY;
-
-        double newDX = Math.cos(robotDirection) * dx + Math.sin(robotDirection) * dy;
-        double newDY = Math.cos(robotDirection) * dy - Math.sin(robotDirection) * dx;
-
-        double maxCurve = maxVelocity / maxAngularVelocity;
-        double dist1 = distance(newDX, newDY, 0, maxCurve);
-        double dist2 = distance(newDX, newDY + maxCurve, 0, 0);
-
-        return !(dist1 > maxCurve) || !(dist2 > maxCurve);
-    }
-
-    private static double distance(double x1, double y1, double x2, double y2) {
-        double diffX = x1 - x2;
-        double diffY = y1 - y2;
-        return Math.sqrt(diffX * diffX + diffY * diffY);
-    }
-
-    private static double angleTo(double fromX, double fromY, double toX, double toY) {
-        double diffX = toX - fromX;
-        double diffY = toY - fromY;
-
-        return asNormalizedRadians(Math.atan2(diffY, diffX));
-    }
-
-    private static double asNormalizedRadians(double angle) {
-        while (angle < 0) {
-            angle += 2*Math.PI;
-        }
-
-        while (angle >= 2*Math.PI) {
-            angle -= 2*Math.PI;
-        }
-
-        return angle;
     }
 
     private void moveRobot(double velocity, double angularVelocity, double duration) {
@@ -123,16 +73,6 @@ public class Robot extends Observable{
         robotPositionY = newY;
         double newDirection = asNormalizedRadians(robotDirection + angularVelocity * duration);
         robotDirection = newDirection;
-    }
-
-    private static double applyLimits(double value, double min, double max) {
-        if (value < min)
-            return min;
-
-        if (value > max)
-            return max;
-
-        return value;
     }
 
 }
