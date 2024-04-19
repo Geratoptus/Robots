@@ -4,7 +4,7 @@ import java.awt.Point;
 public class GameMaths {
 
     public static double countAngularVelocity(Point targetPosition, Robot robot){
-        double angleToTarget = angleTo(robot.getRobotPositionX(), robot.getRobotPositionY(),
+        double angleToTarget = angleTo(robot.getRobotPosition().x, robot.getRobotPosition().y,
                 targetPosition.x, targetPosition.y);
         double angularVelocity = 0;
 
@@ -23,8 +23,8 @@ public class GameMaths {
     }
 
     private static boolean unreachable(Point targetPosition, Robot robot) {
-        double dx = targetPosition.x - robot.getRobotPositionX();
-        double dy = targetPosition.y - robot.getRobotPositionY();
+        double dx = targetPosition.x - robot.getRobotPosition().x;
+        double dy = targetPosition.y - robot.getRobotPosition().y;
 
 
         double newDX = Math.cos(robot.getRobotDirection()) * dx + Math.sin(robot.getRobotDirection()) * dy;
@@ -43,12 +43,6 @@ public class GameMaths {
         return Math.sqrt(diffX * diffX + diffY * diffY);
     }
 
-    public static double distance(Point p1, Point p2) {
-        double diffX = p1.x - p2.x;
-        double diffY = p1.y - p2.y;
-        return Math.sqrt(diffX * diffX + diffY * diffY);
-    }
-
     private static double angleTo(double fromX, double fromY, double toX, double toY) {
         double diffX = toX - fromX;
         double diffY = toY - fromY;
@@ -56,12 +50,6 @@ public class GameMaths {
         return asNormalizedRadians(Math.atan2(diffY, diffX));
     }
 
-    private static double angleTo(Point fromPos, Point toPos) {
-        double diffX = toPos.x - fromPos.x;
-        double diffY = toPos.y - fromPos.y;
-
-        return asNormalizedRadians(Math.atan2(diffY, diffX));
-    }
 
     public static double asNormalizedRadians(double angle) {
         while (angle < 0) {

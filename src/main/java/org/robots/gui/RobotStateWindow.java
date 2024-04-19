@@ -37,7 +37,7 @@ public class RobotStateWindow extends SaveableWindow implements Observer {
 
     private void onRobotMoved() {
         textField.setText(String.format("Position: (%f, %f)\nDirection: %f",
-                robot.getRobotPositionX(), robot.getRobotPositionY(), robot.getRobotDirection()));
+                robot.getRobotPosition().x, robot.getRobotPosition().y, robot.getRobotDirection()));
     }
 
 }
