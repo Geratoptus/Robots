@@ -8,6 +8,7 @@ import java.awt.event.WindowEvent;
 import javax.swing.*;
 
 import org.robots.log.Logger;
+import org.robots.model.GameModel;
 import org.robots.model.Robot;
 import org.robots.state.SaveableWindow;
 
@@ -22,16 +23,15 @@ public class MainApplicationFrame extends JFrame {
 
     private LogWindow logWindow;
     private GameWindow gameWindow;
-    private RobotStateWindow robotStateWindow;
-    private Robot robot;
+    private GameStateWindow gameStateWindow;
+    private GameModel gameModel;
     public MainApplicationFrame() {
         //Make the big window be indented 50 pixels from each edge
         //of the screen.
         int inset = 50;        
         Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
 
-        this.robot = new Robot(100, 100);
-
+        this.gameModel =  new GameModel(new Robot(100, 100));
         setBounds(inset, inset,
             screenSize.width  - inset * 2,
             screenSize.height - inset * 2);
@@ -39,11 +39,11 @@ public class MainApplicationFrame extends JFrame {
         setContentPane(desktopPane);
 
         logWindow = createLogWindow();
-        gameWindow = createGameWindow(robot);
-        robotStateWindow = new RobotStateWindow(robot);
+        gameWindow = createGameWindow(gameModel);
+        gameStateWindow = new GameStateWindow(gameModel);
         addWindow(logWindow, 10, 10, 300, 800);
         addWindow(gameWindow, 300, 10, 400, 400);
-        addWindow(robotStateWindow, 800, 10, 200, 100);
+        addWindow(gameStateWindow, 800, 10, 200, 100);
         setJMenuBar(new MenuBar(this));
 
         addWindowListener(new WindowAdapter(){
@@ -86,8 +86,8 @@ public class MainApplicationFrame extends JFrame {
     }
 
 
-    protected GameWindow createGameWindow(Robot robot){
-        GameWindow gameWindow = new GameWindow(robot);
+    protected GameWindow createGameWindow(GameModel gameModel){
+        GameWindow gameWindow = new GameWindow(gameModel);
 
         return gameWindow;
     }
