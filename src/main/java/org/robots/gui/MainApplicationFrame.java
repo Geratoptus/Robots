@@ -2,19 +2,15 @@ package org.robots.gui;
 
 import java.awt.Dimension;
 import java.awt.Toolkit;
-import java.awt.event.KeyEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 
-import javax.swing.JDesktopPane;
-import javax.swing.JFrame;
-import javax.swing.JInternalFrame;
-import javax.swing.JMenu;
-import javax.swing.JMenuBar;
-import javax.swing.JMenuItem;
-import javax.swing.SwingUtilities;
-import javax.swing.UIManager;
-import javax.swing.UnsupportedLookAndFeelException;
+import javax.swing.*;
 
 import org.robots.log.Logger;
+import org.robots.model.GameModel;
+import org.robots.model.Robot;
+import org.robots.state.SaveableWindow;
 
 /**
  * Что требуется сделать:
@@ -22,135 +18,110 @@ import org.robots.log.Logger;
  * Следует разделить его на серию более простых методов (или вообще выделить отдельный класс).
  *
  */
-public class MainApplicationFrame extends JFrame
-{
+public class MainApplicationFrame extends JFrame {
     private final JDesktopPane desktopPane = new JDesktopPane();
-    
+
+    private LogWindow logWindow;
+    private GameWindow gameWindow;
+    private GameStateWindow gameStateWindow;
+    private GameModel gameModel;
     public MainApplicationFrame() {
         //Make the big window be indented 50 pixels from each edge
         //of the screen.
         int inset = 50;        
         Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
+
+        this.gameModel =  new GameModel(new Robot(100, 100));
         setBounds(inset, inset,
-            screenSize.width  - inset*2,
-            screenSize.height - inset*2);
+            screenSize.width  - inset * 2,
+            screenSize.height - inset * 2);
 
         setContentPane(desktopPane);
-        
-        
-        LogWindow logWindow = createLogWindow();
-        addWindow(logWindow);
 
-        GameWindow gameWindow = new GameWindow();
-        gameWindow.setSize(400,  400);
-        addWindow(gameWindow);
+        logWindow = createLogWindow();
+        gameWindow = createGameWindow(gameModel);
+        gameStateWindow = new GameStateWindow(gameModel);
+        addWindow(logWindow, 10, 10, 300, 800);
+        addWindow(gameWindow, 300, 10, 400, 400);
+        addWindow(gameStateWindow, 800, 10, 200, 100);
+        setJMenuBar(new MenuBar(this));
 
-        setJMenuBar(generateMenuBar());
-        setDefaultCloseOperation(EXIT_ON_CLOSE);
+        addWindowListener(new WindowAdapter(){
+            @Override
+            public void windowClosing(WindowEvent event){
+                MainApplicationFrame.this.confirmWindowClose();
+            }
+        });
+        restoreWindows();
+        setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
     }
-    
-    protected LogWindow createLogWindow()
-    {
+    public void saveWindows(){
+        for (var frame : desktopPane.getAllFrames()){
+            if (frame instanceof SaveableWindow)
+                ((SaveableWindow) frame).saveState();
+        }
+    }
+
+    private void restoreWindows(){
+        for (var frame : desktopPane.getAllFrames()){
+            if (frame instanceof SaveableWindow)
+                ((SaveableWindow) frame).restoreState();
+        }
+    }
+
+    private void confirmSave(){
+        if (JOptionPane.showConfirmDialog(this, "Хотите сохранить состояние окон?",
+                "Сохранить?", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE) == JOptionPane.YES_OPTION){
+            saveWindows();
+        }
+    }
+    public void confirmWindowClose(){
+        if (JOptionPane.showConfirmDialog(this, "Вы уверены, что хотите закрыть приложение?",
+                "Закрыть?", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE) == JOptionPane.YES_OPTION){
+            confirmSave();
+            logWindow.dispose();
+            gameWindow.dispose();
+            this.dispose();
+        }
+    }
+
+
+    protected GameWindow createGameWindow(GameModel gameModel){
+        GameWindow gameWindow = new GameWindow(gameModel);
+
+        return gameWindow;
+    }
+
+    protected LogWindow createLogWindow() {
+
         LogWindow logWindow = new LogWindow(Logger.getDefaultLogSource());
-        logWindow.setLocation(10,10);
-        logWindow.setSize(300, 800);
+
+
         setMinimumSize(logWindow.getSize());
         logWindow.pack();
         Logger.debug("Протокол работает");
+
         return logWindow;
     }
-    
-    protected void addWindow(JInternalFrame frame)
-    {
+
+    protected void addWindow(JInternalFrame frame) {
+
         desktopPane.add(frame);
         frame.setVisible(true);
     }
-    
-//    protected JMenuBar createMenuBar() {
-//        JMenuBar menuBar = new JMenuBar();
-// 
-//        //Set up the lone menu.
-//        JMenu menu = new JMenu("Document");
-//        menu.setMnemonic(KeyEvent.VK_D);
-//        menuBar.add(menu);
-// 
-//        //Set up the first menu item.
-//        JMenuItem menuItem = new JMenuItem("New");
-//        menuItem.setMnemonic(KeyEvent.VK_N);
-//        menuItem.setAccelerator(KeyStroke.getKeyStroke(
-//                KeyEvent.VK_N, ActionEvent.ALT_MASK));
-//        menuItem.setActionCommand("new");
-////        menuItem.addActionListener(this);
-//        menu.add(menuItem);
-// 
-//        //Set up the second menu item.
-//        menuItem = new JMenuItem("Quit");
-//        menuItem.setMnemonic(KeyEvent.VK_Q);
-//        menuItem.setAccelerator(KeyStroke.getKeyStroke(
-//                KeyEvent.VK_Q, ActionEvent.ALT_MASK));
-//        menuItem.setActionCommand("quit");
-////        menuItem.addActionListener(this);
-//        menu.add(menuItem);
-// 
-//        return menuBar;
-//    }
-    
-    private JMenuBar generateMenuBar()
-    {
-        JMenuBar menuBar = new JMenuBar();
-        
-        JMenu lookAndFeelMenu = new JMenu("Режим отображения");
-        lookAndFeelMenu.setMnemonic(KeyEvent.VK_V);
-        lookAndFeelMenu.getAccessibleContext().setAccessibleDescription(
-                "Управление режимом отображения приложения");
-        
-        {
-            JMenuItem systemLookAndFeel = new JMenuItem("Системная схема", KeyEvent.VK_S);
-            systemLookAndFeel.addActionListener((event) -> {
-                setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-                this.invalidate();
-            });
-            lookAndFeelMenu.add(systemLookAndFeel);
-        }
 
-        {
-            JMenuItem crossplatformLookAndFeel = new JMenuItem("Универсальная схема", KeyEvent.VK_S);
-            crossplatformLookAndFeel.addActionListener((event) -> {
-                setLookAndFeel(UIManager.getCrossPlatformLookAndFeelClassName());
-                this.invalidate();
-            });
-            lookAndFeelMenu.add(crossplatformLookAndFeel);
-        }
-
-        JMenu testMenu = new JMenu("Тесты");
-        testMenu.setMnemonic(KeyEvent.VK_T);
-        testMenu.getAccessibleContext().setAccessibleDescription(
-                "Тестовые команды");
-        
-        {
-            JMenuItem addLogMessageItem = new JMenuItem("Сообщение в лог", KeyEvent.VK_S);
-            addLogMessageItem.addActionListener((event) -> {
-                Logger.debug("Новая строка");
-            });
-            testMenu.add(addLogMessageItem);
-        }
-
-        menuBar.add(lookAndFeelMenu);
-        menuBar.add(testMenu);
-        return menuBar;
+    protected void addWindow(JInternalFrame frame, int xLocation, int yLocation, int width, int height){
+        frame.setSize(width, height);
+        frame.setLocation(xLocation, yLocation);
+        addWindow(frame);
     }
-    
-    private void setLookAndFeel(String className)
-    {
-        try
-        {
-            UIManager.setLookAndFeel(className);
-            SwingUtilities.updateComponentTreeUI(this);
-        }
-        catch (ClassNotFoundException | InstantiationException
-            | IllegalAccessException | UnsupportedLookAndFeelException e)
-        {
-            // just ignore
-        }
+
+    public GameWindow getGameWindow(){
+        return gameWindow;
     }
+
+    public LogWindow getLogWindow(){
+        return logWindow;
+    }
+
 }
